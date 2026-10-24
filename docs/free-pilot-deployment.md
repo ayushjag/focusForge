@@ -19,8 +19,8 @@ Neon currently offers a free PostgreSQL plan without a credit card. We use it in
 
 1. Sign up at https://neon.com/ using your own account. Keep the Free plan.
 2. Create a project named `focusforge-pilot`; choose a region near the Render region you will use.
-3. Open the connection dialog and copy the **direct (non-pooled)** PostgreSQL connection string. Keep its TLS/SSL parameters. A direct connection keeps this small single-instance pilot's migration setup simple.
-4. Enter the string only into the backend service's `DATABASE_URL` secret setting in the next step. Do not put it in a tracked file or chat.
+3. Obtain both the **pooled** and **direct (non-pooled)** PostgreSQL connection strings. Keep their TLS/SSL parameters. If the CLI is linked, `neon deploy` pulls both into the ignored root `.env.local`; see `neon-setup.md`.
+4. Enter the pooled string into the backend service's `DATABASE_URL` setting and the direct string into `DATABASE_URL_UNPOOLED`. Do not put either value in a tracked file or chat.
 
 No local Docker container is required for a deployed Neon database. Local Docker remains useful for development.
 
@@ -46,7 +46,8 @@ Set environment variables in the service dashboard:
 | `NODE_VERSION` | `22` |
 | `NODE_ENV` | `production` |
 | `HOST` | `0.0.0.0` |
-| `DATABASE_URL` | The direct Neon connection string |
+| `DATABASE_URL` | The pooled Neon connection string |
+| `DATABASE_URL_UNPOOLED` | The direct Neon connection string for migrations |
 | `JWT_SECRET` | A new random value, at least 32 characters |
 
 Let Render supply `PORT`. Binding to `0.0.0.0` lets Render route traffic to the process; `127.0.0.1` would only accept connections from inside its own machine.
@@ -78,7 +79,7 @@ Create another Render **Web Service** from the same repository:
 | Health-check path | `/login` |
 | Auto-deploy | After CI Checks Pass |
 
-Set `NODE_VERSION=22`, `NODE_ENV=production`, and `FOCUSFORGE_API_URL` to the API's actual HTTPS address without a trailing slash. Do not set `FOCUSFORGE_E2E`; it is for the separate test build. Do not copy `DATABASE_URL` or `JWT_SECRET` into the frontend service.
+Set `NODE_VERSION=22`, `NODE_ENV=production`, and `FOCUSFORGE_API_URL` to the API's actual HTTPS address without a trailing slash. Do not set `FOCUSFORGE_E2E`; it is for the separate test build. Keep database credentials and `JWT_SECRET` on the backend service.
 
 This app needs a running Next.js server because it uses server-side auth cookies and proxy routes. Render's Static Site option cannot serve those routes.
 

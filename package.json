@@ -1,0 +1,17 @@
+{
+  "name": "focusforge",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "db:generate": "npm --prefix backend run db:generate",
+    "db:deploy": "npm --prefix backend run db:deploy",
+    "start:api": "npm --prefix backend start",
+    "start:web": "npm --prefix frontend start",
+    "test:neon": "node backend/tests/neon-smoke.mjs"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.3",
+    "@neon/env": "^1.6.4"
+  }
+}

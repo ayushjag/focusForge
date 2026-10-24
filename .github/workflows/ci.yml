@@ -54,8 +54,12 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: |
+            package-lock.json
             backend/package-lock.json
             frontend/package-lock.json
+
+      - name: Install Neon configuration dependencies
+        run: npm ci
 
       - name: Install backend dependencies
         run: npm ci --prefix backend

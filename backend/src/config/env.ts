@@ -1,8 +1,4 @@
-import { existsSync } from "node:fs";
-
-if (existsSync(".env")) {
-  process.loadEnvFile(".env");
-}
+import "./load-env.js";
 
 const jwtSecret = process.env.JWT_SECRET;
 

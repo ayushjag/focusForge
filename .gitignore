@@ -2,6 +2,13 @@ backend/node_modules/
 backend/dist/
 backend/.env
 
+# Neon CLI environment files contain database credentials.
+/.env*
+!/.env.example
+/.neon
+/node_modules/
+/.next/
+
 # Local repository metadata and unrelated work
 /.local-git-backups/
 /shade-of-green/
