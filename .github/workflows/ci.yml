@@ -1,0 +1,132 @@
+name: FocusForge CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://focusforge:ci_password@127.0.0.1:5432/focusforge_ci?schema=public
+      JWT_SECRET: focusforge-ci-only-secret-not-for-production
+      HOST: 127.0.0.1
+      PORT: "5000"
+      FOCUSFORGE_API_URL: http://127.0.0.1:5000
+      FOCUSFORGE_WEB_TEST_URL: http://127.0.0.1:3107
+      FOCUSFORGE_E2E: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: focusforge
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: focusforge_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U focusforge -d focusforge_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: Generate database client
+        run: npm --prefix backend run db:generate
+
+      - name: Apply migrations to temporary database
+        run: npm --prefix backend run db:deploy
+
+      - name: Test backend
+        run: npm --prefix backend test
+
+      - name: Test extension
+        run: npm --prefix extension test
+
+      - name: Build backend
+        run: npm --prefix backend run build
+
+      - name: Lint frontend
+        run: npm --prefix frontend run lint
+
+      - name: Build frontend
+        run: npm --prefix frontend run build
+
+      - name: Install Chrome for browser tests
+        working-directory: frontend
+        run: npx playwright install --with-deps chrome
+
+      - name: Test running applications
+        shell: bash
+        run: |
+          node backend/dist/server.js > "$RUNNER_TEMP/focusforge-api.log" 2>&1 &
+          api_pid=$!
+          node frontend/node_modules/next/dist/bin/next start frontend --hostname 127.0.0.1 --port 3107 > "$RUNNER_TEMP/focusforge-web.log" 2>&1 &
+          web_pid=$!
+          trap 'kill "$api_pid" "$web_pid" 2>/dev/null || true' EXIT
+
+          wait_for_server() {
+            local url="$1" pid="$2"
+            for attempt in {1..60}; do
+              if ! kill -0 "$pid" 2>/dev/null; then
+                echo "Server exited before becoming ready: $url"
+                return 1
+              fi
+              if curl --fail --silent --connect-timeout 2 --max-time 5 "$url" > /dev/null; then
+                return 0
+              fi
+              sleep 2
+            done
+            echo "Server readiness timed out: $url"
+            return 1
+          }
+
+          wait_for_server http://127.0.0.1:5000/api/health/database/schema "$api_pid"
+          wait_for_server http://127.0.0.1:3107/login "$web_pid"
+          npm --prefix backend run test:integration
+          npm --prefix frontend run test:e2e
+
+      - name: Save failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ci-failure-diagnostics
+          retention-days: 3
+          if-no-files-found: ignore
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+            ${{ runner.temp }}/focusforge-api.log
+            ${{ runner.temp }}/focusforge-web.log
