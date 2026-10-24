@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5f6f4;
+  --surface: #ffffff;
+  --surface-soft: #e9ece8;
+  --foreground: #151815;
+  --muted: #6f7771;
+  --border: #dde1dc;
+  --primary: #1f7a50;
+  --primary-hover: #17633f;
+  --focus: #baf06a;
+  --amber: #e7a838;
+  --coral: #df775f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-focus: var(--focus);
+  --color-amber: var(--amber);
+  --color-coral: var(--coral);
+  --font-sans: var(--font-workspace), "Segoe UI", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-workspace), "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--focus);
+  color: var(--foreground);
+}
