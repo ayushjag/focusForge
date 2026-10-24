@@ -1,0 +1,286 @@
+:root {
+  color-scheme: light;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #17211b;
+  background: #f6f8f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 360px;
+  min-height: 330px;
+  margin: 0;
+  background: #f6f8f6;
+}
+
+.popup-shell {
+  min-height: 330px;
+  padding: 22px;
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #dce3dd;
+}
+
+.brand-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 8px;
+  background: #1c6542;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 750;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.brand-header p {
+  margin-top: 2px;
+  color: #637068;
+  font-size: 12px;
+}
+
+.status-panel {
+  padding: 24px 0 20px;
+}
+
+.status-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.status-indicator {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #a66a13;
+  box-shadow: 0 0 0 3px #f4e8d5;
+}
+
+.status-indicator.ready {
+  background: #238657;
+  box-shadow: 0 0 0 3px #d9eee2;
+}
+
+.status-indicator.error {
+  background: #b33c35;
+  box-shadow: 0 0 0 3px #f3dddb;
+}
+
+h2 {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.status-panel p {
+  margin-top: 8px;
+  color: #637068;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.auth-view {
+  padding-bottom: 20px;
+  border-top: 1px solid #dce3dd;
+}
+
+.hidden {
+  display: none;
+}
+
+.auth-view > h2 {
+  margin-top: 20px;
+}
+
+.section-copy {
+  margin-top: 4px;
+  color: #637068;
+  font-size: 12px;
+}
+
+form {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+label,
+.section-label {
+  color: #4f5c54;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+input {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 5px;
+  padding: 0 11px;
+  border: 1px solid #bdc8c0;
+  border-radius: 6px;
+  outline: none;
+  background: #ffffff;
+  color: #17211b;
+  font: inherit;
+  font-size: 13px;
+}
+
+input:focus {
+  border-color: #238657;
+  box-shadow: 0 0 0 3px #d9eee2;
+}
+
+button {
+  height: 40px;
+  border: 0;
+  border-radius: 6px;
+  background: #1c6542;
+  color: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #165236;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.form-error {
+  min-height: 18px;
+  color: #a8332d;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.account-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 0;
+}
+
+.account-heading h2 {
+  max-width: 172px;
+  margin-top: 4px;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.secondary-button {
+  width: auto;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid #bdc8c0;
+  background: transparent;
+  color: #344039;
+  font-size: 12px;
+}
+
+.secondary-button:hover {
+  background: #e9eeea;
+}
+
+.countdown-panel {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-top: 1px solid #dce3dd;
+}
+
+.countdown-panel.hidden {
+  display: none;
+}
+
+.countdown-panel span {
+  color: #4f5c54;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.countdown-panel strong {
+  color: #1c6542;
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.extension-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+  border-top: 1px solid #dce3dd;
+  border-bottom: 1px solid #dce3dd;
+}
+
+.extension-details div {
+  padding: 16px 0;
+}
+
+.extension-details div + div {
+  padding-left: 18px;
+  border-left: 1px solid #dce3dd;
+}
+
+dt {
+  color: #637068;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+dd {
+  margin: 5px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 16px;
+  color: #748078;
+  font-size: 11px;
+}
+
+footer strong {
+  color: #4a554e;
+}

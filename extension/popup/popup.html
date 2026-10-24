@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FocusForge</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup-shell">
+      <header class="brand-header">
+        <div class="brand-mark" aria-hidden="true">F</div>
+        <div>
+          <h1>FocusForge</h1>
+          <p>Distraction blocking</p>
+        </div>
+      </header>
+
+      <section class="status-panel" aria-labelledby="status-title">
+        <div class="status-heading">
+          <span id="status-indicator" class="status-indicator" aria-hidden="true"></span>
+          <h2 id="status-title">Checking extension</h2>
+        </div>
+        <p id="status-message">Connecting to the background service...</p>
+      </section>
+
+      <section id="login-view" class="auth-view hidden" aria-labelledby="login-title">
+        <h2 id="login-title">Sign in</h2>
+        <p class="section-copy">Use your FocusForge account.</p>
+
+        <form id="login-form">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required />
+
+          <label for="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            minlength="8"
+            required
+          />
+
+          <p id="login-error" class="form-error" role="alert"></p>
+          <button id="login-button" type="submit">Sign in</button>
+        </form>
+      </section>
+
+      <section id="account-view" class="auth-view hidden" aria-labelledby="account-title">
+        <div class="account-heading">
+          <div>
+            <span class="section-label">Signed in as</span>
+            <h2 id="account-title">FocusForge user</h2>
+          </div>
+          <div class="account-actions">
+            <button id="sync-button" class="secondary-button" type="button">Refresh</button>
+            <button id="logout-button" class="secondary-button" type="button">Sign out</button>
+          </div>
+        </div>
+
+        <div id="countdown-panel" class="countdown-panel hidden" aria-live="polite">
+          <span>Time remaining</span>
+          <strong id="countdown-value">00:00</strong>
+        </div>
+
+        <dl class="extension-details">
+          <div>
+            <dt>Session</dt>
+            <dd id="session-status">Not active</dd>
+          </div>
+          <div>
+            <dt>Blocked sites</dt>
+            <dd id="blocked-count">0</dd>
+          </div>
+        </dl>
+      </section>
+
+      <footer>
+        <span>Version</span>
+        <strong id="extension-version">0.5.0</strong>
+      </footer>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

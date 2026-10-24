@@ -1,0 +1,421 @@
+{
+  "info": {
+    "_postman_id": "f4d9e9d1-73f1-4b13-90c5-focusforge001",
+    "name": "FocusForge API",
+    "description": "Postman collection for testing FocusForge backend modules step by step.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "POST Register",
+          "auth": { "type": "noauth" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', response.data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"your-email@example.com\",\n  \"password\": \"FocusForgePass123!\",\n  \"timezone\": \"Asia/Kolkata\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Login",
+          "auth": { "type": "noauth" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', response.data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"your-email@example.com\",\n  \"password\": \"FocusForgePass123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Checks whether the FocusForge API server is running."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Database",
+      "item": [
+        {
+          "name": "GET Database Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/database",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health",
+                "database"
+              ]
+            },
+            "description": "Confirms the API can connect to PostgreSQL through Prisma."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Core Schema Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/database/schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health",
+                "database",
+                "schema"
+              ]
+            },
+            "description": "Confirms the User, Task, and FocusSession tables were created by the first migration."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "POST Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.collectionVariables.set('taskId', response.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-user-id", "value": "{{devUserId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Prepare FocusForge task API\",\n  \"description\": \"Build and test the first task endpoint.\",\n  \"priority\": \"HIGH\",\n  \"scheduledStart\": \"2026-10-20T09:00:00.000Z\",\n  \"scheduledEnd\": \"2026-10-20T10:00:00.000Z\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/tasks", "host": ["{{baseUrl}}"], "path": ["api", "tasks"] }
+          },
+          "response": []
+        },
+        {
+          "name": "GET List Tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-user-id", "value": "{{devUserId}}" }],
+            "url": { "raw": "{{baseUrl}}/api/tasks", "host": ["{{baseUrl}}"], "path": ["api", "tasks"] }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Task By ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-user-id", "value": "{{devUserId}}" }],
+            "url": { "raw": "{{baseUrl}}/api/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["api", "tasks", "{{taskId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update Task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-user-id", "value": "{{devUserId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"COMPLETED\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["api", "tasks", "{{taskId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Task",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "x-user-id", "value": "{{devUserId}}" }],
+            "url": { "raw": "{{baseUrl}}/api/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["api", "tasks", "{{taskId}}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Focus Sessions",
+      "item": [
+        {
+          "name": "POST Start Focus Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.collectionVariables.set('sessionId', response.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-user-id", "value": "{{devUserId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"taskId\": \"{{taskId}}\",\n  \"durationMinutes\": 25\n}" },
+            "url": { "raw": "{{baseUrl}}/api/sessions/start", "host": ["{{baseUrl}}"], "path": ["api", "sessions", "start"] }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Active Focus Session",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-user-id", "value": "{{devUserId}}" }],
+            "url": { "raw": "{{baseUrl}}/api/sessions/active", "host": ["{{baseUrl}}"], "path": ["api", "sessions", "active"] }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Focus Sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-user-id", "value": "{{devUserId}}" }],
+            "url": { "raw": "{{baseUrl}}/api/sessions", "host": ["{{baseUrl}}"], "path": ["api", "sessions"] }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Complete Focus Session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "x-user-id", "value": "{{devUserId}}" }],
+            "url": { "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/complete", "host": ["{{baseUrl}}"], "path": ["api", "sessions", "{{sessionId}}", "complete"] }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Cancel Focus Session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "x-user-id", "value": "{{devUserId}}" }],
+            "url": { "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/cancel", "host": ["{{baseUrl}}"], "path": ["api", "sessions", "{{sessionId}}", "cancel"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Blocked Websites",
+      "item": [
+        {
+          "name": "POST Add Blocked Website",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.collectionVariables.set('blockedWebsiteId', response.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"domain\": \"https://www.youtube.com/watch?v=example\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/blocked-websites", "host": ["{{baseUrl}}"], "path": ["api", "blocked-websites"] }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Blocked Websites",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/blocked-websites", "host": ["{{baseUrl}}"], "path": ["api", "blocked-websites"] }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Disable Blocked Website",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"enabled\": false\n}" },
+            "url": { "raw": "{{baseUrl}}/api/blocked-websites/{{blockedWebsiteId}}", "host": ["{{baseUrl}}"], "path": ["api", "blocked-websites", "{{blockedWebsiteId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Enable Blocked Website",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"enabled\": true\n}" },
+            "url": { "raw": "{{baseUrl}}/api/blocked-websites/{{blockedWebsiteId}}", "host": ["{{baseUrl}}"], "path": ["api", "blocked-websites", "{{blockedWebsiteId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Blocked Website",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/blocked-websites/{{blockedWebsiteId}}", "host": ["{{baseUrl}}"], "path": ["api", "blocked-websites", "{{blockedWebsiteId}}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "GET Analytics Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/analytics/summary", "host": ["{{baseUrl}}"], "path": ["api", "analytics", "summary"] },
+            "description": "Protected seven-day summary using the account timezone. Add ?timezone=Asia/Kolkata to override it."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Extension",
+      "item": [
+        {
+          "name": "GET Extension Blocking State",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/extension/blocking-state", "host": ["{{baseUrl}}"], "path": ["api", "extension", "blocking-state"] }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5000",
+      "type": "string"
+    },
+    {
+      "key": "devUserId",
+      "value": "dev-user-focusforge",
+      "type": "string"
+    },
+    {
+      "key": "taskId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "blockedWebsiteId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+% Compile with pdfLaTeX in Overleaf.
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[a4paper,margin=0.6in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\input{glyphtounicode}
+\pdfgentounicode=1
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\emergencystretch}{2em}
+\linespread{1.02}
+\urlstyle{same}
+
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{11pt}{6pt}
+\setlist[itemize]{leftmargin=16pt,topsep=4pt,itemsep=3pt,parsep=0pt,partopsep=0pt}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE\textbf{Ayush Jagwan}}\\[4pt]
+    +91-7060935447 \enspace\textbar\enspace
+    \href{mailto:ayushjag30@gmail.com}{ayushjag30@gmail.com}\\[3pt]
+    {\small
+    \href{https://www.linkedin.com/in/ayush-jagwan6/}{linkedin.com/in/ayush-jagwan6}
+    \enspace\textbar\enspace
+    \href{https://github.com/ayushjag}{github.com/ayushjag}
+    \enspace\textbar\enspace
+    \href{https://leetcode.com/u/ayushjag30/}{leetcode.com/u/ayushjag30}}
+\end{center}
+
+\section*{WORK EXPERIENCE}
+
+\textbf{Crobstacle} --- Full-Stack Developer \hfill Jul 2026 -- Present
+\begin{itemize}
+    \item Integrated OpenAI APIs into application features and implemented authentication workflows.
+    \item Added Redis caching to the meeting module to reduce repeated database queries.
+    \item Containerized services with Docker and supported AWS deployments through CI/CD pipelines.
+\end{itemize}
+
+\vspace{3pt}
+\textbf{Nexzem Technology} --- Full-Stack Developer \hfill Aug 2025 -- Jun 2026
+\begin{itemize}
+    \item Built REST APIs and role-based workflows for application features.
+    \item Optimized database queries and data access patterns to improve backend performance.
+    \item Developed frontend features, integrated backend APIs, and supported application releases on AWS.
+\end{itemize}
+
+\section*{PROJECTS}
+
+\textbf{Alya --- Lighting Design Workflow Platform} \hfill Aug 2026 -- Present
+\begin{itemize}
+    \item Built a Node.js and PostgreSQL backend with authentication, role-based access, and multi-tenant organization and project management.
+    \item Added drawing storage, project versioning, room captures, bill of quantities (BOQ) PDFs, and signed file links.
+    \item Implemented background jobs for CAD uploads, DWG parsing, and geometry classification.
+    \item Added meeting transcription, AI-generated minutes, and human approval workflows for decisions.
+\end{itemize}
+
+\vspace{3pt}
+\textbf{Multi-Vendor E-Commerce Marketplace Backend} \hfill Mar 2026 -- Jul 2026
+\begin{itemize}
+    \item Built APIs for seller onboarding, product catalogs, carts, orders, and refunds using Node.js, Fastify, Prisma, and PostgreSQL.
+    \item Split customer orders into seller-specific sub-orders for fulfillment, tracking, and refunds.
+    \item Integrated Stripe Connect payments, webhooks, commission calculations, GST handling, and retryable notifications.
+\end{itemize}
+
+\section*{TECHNICAL SKILLS}
+
+\textbf{Languages:} JavaScript (ES6+), TypeScript, C++\\[2pt]
+\textbf{Frontend:} React.js, Next.js, TanStack Query, Tailwind CSS, HTML5, CSS3\\[2pt]
+\textbf{Backend:} Node.js, Express.js, Fastify, REST APIs, JWT, Socket.IO\\[2pt]
+\textbf{Databases \& Caching:} PostgreSQL, MongoDB, Prisma ORM, Redis\\[2pt]
+\textbf{Cloud \& DevOps:} AWS, Docker, GitHub Actions, CI/CD\\[2pt]
+\textbf{Integrations \& Tools:} OpenAI APIs, Stripe Connect, Git, GitHub, Postman, Vercel, Cloudinary
+
+\section*{EDUCATION}
+
+\textbf{Graphic Era Hill University} \hfill Sep 2021 -- Jun 2025\\
+Bachelor of Technology in Computer Science
+
+\section*{ACHIEVEMENTS}
+
+\begin{itemize}
+    \item Solved 250+ data structures and algorithms problems on LeetCode and GeeksforGeeks.
+    \item Ranked 5th among 100+ participants in an inter-college coding competition.
+\end{itemize}
+
+\end{document}
