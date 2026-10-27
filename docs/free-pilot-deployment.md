@@ -94,6 +94,18 @@ This app needs a running Next.js server because it uses server-side auth cookies
 
 A sleeping service may take time to wake up. Report observed delays honestly to testers. If the free runtime cannot start the app reliably, stop and evaluate another free option rather than choosing a paid plan automatically.
 
+### Prisma P1001 during startup
+
+`npm run db:deploy && npm start` stops before the API starts if migrations cannot connect. The message "Prisma config detected, skipping environment variable loading" is normal: `prisma.config.ts` explicitly loads our environment, and Render injects its variables directly.
+
+The shared environment loader adds `connect_timeout=15` to Neon database URLs when no explicit timeout exists. This applies to both application traffic and the direct migration connection. Prisma's default is five seconds, which can be too short for a cold Neon connection. Existing timeout settings, credentials, TLS options, and non-Neon URLs are preserved.
+
+For an immediate dashboard-only change before deploying the code, append `&connect_timeout=15` to both database URL values if they already have a query string and no `connect_timeout` parameter. Keep the original URLs private. If they have no query string, use `?connect_timeout=15`.
+
+P1001 is not proof of a cold start. If it persists, check the Neon endpoint state and hostname, verify both Render environment variables use current credentials, and inspect network restrictions. If Neon IP Allow is enabled, allow the Render service's documented outbound IP ranges; do not remove existing protections. A successful connection from a laptop does not prove reachability from Render.
+
+Reference: https://www.prisma.io/docs/orm/v6/overview/databases/neon#resolving-connection-timeouts
+
 ## 5. Extension and onboarding checkpoint
 
 The current extension is still a local-development extension: its API URL points to `127.0.0.1` and its web synchronization script matches localhost. Website deployment alone does not make that extension work remotely.

@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { withNeonConnectionTimeout } from "./database-url.js";
 
 const useDirectUrlFallback = () => {
   if (!process.env.DATABASE_URL_UNPOOLED && process.env.DATABASE_URL) {
@@ -15,4 +16,9 @@ for (const relativePath of ["../../../.env.local", "../../../.env", "../../.env"
   const path = fileURLToPath(new URL(relativePath, import.meta.url));
   if (existsSync(path)) process.loadEnvFile(path);
   useDirectUrlFallback();
+}
+
+for (const key of ["DATABASE_URL", "DATABASE_URL_UNPOOLED"]) {
+  const value = withNeonConnectionTimeout(process.env[key]);
+  if (value !== undefined) process.env[key] = value;
 }
