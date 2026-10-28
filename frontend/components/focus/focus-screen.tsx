@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { FocusSetup } from "./focus-setup";
+import { FocusSites } from "./focus-sites";
+import { ExtensionStatus } from "./extension-status";
 import { apiRequest } from "@/lib/api/client";
 import type { FocusSession, Task } from "@/lib/api/types";
 import { requestExtensionSync } from "@/lib/extension-sync";
@@ -147,7 +149,7 @@ export function FocusScreen() {
             <CardHeader className="flex flex-row items-start justify-between gap-4 pb-3">
               <div>
                 <Badge variant="yellow">Deep focus</Badge>
-                <CardTitle className="mt-4 text-2xl">{sessionTask?.title ?? "Focused work"}</CardTitle>
+                <CardTitle className="mt-4 break-words text-2xl">{sessionTask?.title ?? "Focused work"}</CardTitle>
                 <CardDescription className="text-[#695b35]">Your protected block of time.</CardDescription>
               </div>
               <span className="flex size-11 items-center justify-center rounded-full bg-white/75"><ShieldCheck size={21} /></span>
@@ -176,7 +178,14 @@ export function FocusScreen() {
             onRetry={() => { void tasksQuery.refetch(); }} />
         )}
 
-        <section className="min-w-0 border-t border-border pt-6 xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0" aria-label="Recent sessions">
+        {activeSession ? (
+          <section className="min-w-0 border-t border-border pt-6 xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0" aria-labelledby="active-protection-heading">
+            <h2 id="active-protection-heading" className="text-lg font-semibold">Distraction protection</h2>
+            <p className="mt-1 text-sm text-muted">Changes to enabled sites apply during this session.</p>
+            <div className="mt-6"><FocusSites /></div>
+            <ExtensionStatus />
+          </section>
+        ) : <section className="min-w-0 border-t border-border pt-6 xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0" aria-label="Recent sessions">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div><CardTitle>Recent sessions</CardTitle><CardDescription className="text-[#745767]">Your latest focus activity</CardDescription></div>
@@ -199,7 +208,7 @@ export function FocusScreen() {
               ))}
             </div>
           </CardContent>
-        </section>
+        </section>}
       </div>
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>

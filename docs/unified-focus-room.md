@@ -14,7 +14,16 @@ Blocked Sites first. Those pages remain available for full management.
 
 This step preserves the existing backend contract: a session still needs a task.
 Task-free sessions require a separate backend/schema change; no hidden tasks are
-created to simulate that feature. The active-session view is largely unchanged.
+created to simulate that feature.
+
+## Active Session
+
+The Focus Room keeps the timer on the left and distraction protection on the
+right on wide screens. On mobile, the site controls and extension status follow
+the timer. Users can add a domain or enable/pause a saved site during an active
+session. Each successful change requests an immediate extension sync. The
+connection check continues to verify that the extension is signed in as the
+same account. Recent session history returns when the active session ends.
 
 ## Read the Code in This Order
 
@@ -51,6 +60,5 @@ extension deployment smoke test is opt-in and uses temporary live records.
 
 ## Next Step
 
-After setup testing, improve the active-session screen with editable site controls
-and verified connection status. Task-free sessions and changing the default entry
-page are separate follow-ups, not included in this step.
+Make the extension easy to download and install from the website. Task-free
+sessions and changing the default entry page are separate follow-ups.

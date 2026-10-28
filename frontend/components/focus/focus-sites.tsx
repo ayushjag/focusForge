@@ -10,7 +10,7 @@ import type { BlockedWebsite } from "@/lib/api/types";
 import { requestExtensionSync } from "@/lib/extension-sync";
 import { validateDomainInput } from "@/lib/validation/domain";
 
-export function FocusSites({ onBusyChange }: { onBusyChange: (busy: boolean) => void }) {
+export function FocusSites({ onBusyChange }: { onBusyChange?: (busy: boolean) => void }) {
   const queryClient = useQueryClient();
   const [domain, setDomain] = useState("");
   const [touched, setTouched] = useState(false);
@@ -20,13 +20,13 @@ export function FocusSites({ onBusyChange }: { onBusyChange: (busy: boolean) => 
       apiRequest<BlockedWebsite>(`/api/backend/blocked-websites${id ? `/${id}` : ""}`, {
         method: id ? "PATCH" : "POST", body: JSON.stringify(id ? { enabled } : { domain }),
       }),
-    onMutate: () => onBusyChange(true),
+    onMutate: () => onBusyChange?.(true),
     onSuccess: async (_site, input) => {
       if (!input.id) { setDomain(""); setTouched(false); }
       requestExtensionSync();
       await queryClient.invalidateQueries({ queryKey: ["blocked-websites"] });
     },
-    onSettled: () => onBusyChange(false),
+    onSettled: () => onBusyChange?.(false),
   });
   const error = touched ? validateDomainInput(domain) : null;
   function submit(event: FormEvent) {

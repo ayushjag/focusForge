@@ -293,3 +293,53 @@ test("focus setup fits the viewport", async ({ page }, testInfo) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("focus-setup.png"), fullPage: true });
 });
+
+test("manages blocked sites beside the active timer, including after refresh", async ({ page }, testInfo) => {
+  const state = await mockApi(page, [task("Prepare release")]);
+  state.sites.push({ id: "site-1", domain: "youtube.com", enabled: true });
+  await page.addInitScript(() => {
+    window.addEventListener("message", (event) => {
+      if (event.source === window && event.data?.type === "FOCUSFORGE_CHECK_EXTENSION") {
+        window.postMessage({ type: "FOCUSFORGE_EXTENSION_STATUS", requestId: event.data.requestId,
+          status: "connected", userId: "user-1" }, window.location.origin);
+      }
+    });
+  });
+
+  await page.goto("/focus");
+  await page.getByRole("button", { name: "Start focus session" }).click();
+  const protection = page.getByRole("region", { name: "Distraction protection" });
+  await expect(protection).toBeVisible();
+  await expect(protection.getByText("Extension connected", { exact: true })).toBeVisible();
+  await protection.getByRole("switch", { name: "Pause blocking for youtube.com" }).click();
+  await expect(protection.getByRole("switch", { name: "Enable blocking for youtube.com" })).not.toBeChecked();
+  await protection.getByRole("textbox", { name: "Website domain or URL" }).fill("reddit.com");
+  await protection.getByRole("button", { name: "Add site" }).click();
+  await expect(protection.getByRole("switch", { name: "Pause blocking for reddit.com" })).toBeChecked();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Finish session" })).toBeVisible();
+  await expect(protection.getByRole("switch", { name: "Enable blocking for youtube.com" })).not.toBeChecked();
+  await expect(protection.getByRole("switch", { name: "Pause blocking for reddit.com" })).toBeChecked();
+  await expect(protection.getByText("Extension connected", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("active-focus.png"), fullPage: true });
+  await page.getByRole("button", { name: "Finish session" }).click();
+  await expect(protection).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Recent sessions" })).toBeVisible();
+  expect(state.sites.find((site) => site.domain === "youtube.com")?.enabled).toBe(false);
+  expect(state.sites.find((site) => site.domain === "reddit.com")?.enabled).toBe(true);
+});
+
+test("active session reports failed site loading and recovers in place", async ({ page }) => {
+  const state = await mockApi(page, [task("Prepare release")]);
+  await page.goto("/focus");
+  await page.getByRole("button", { name: "Start focus session" }).click();
+  await expect(page.getByRole("region", { name: "Distraction protection" })).toBeVisible();
+  state.failSites = true;
+  await page.reload();
+  await expect(page.getByText("Websites could not be loaded.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Finish session" })).toBeVisible();
+  state.failSites = false;
+  await page.getByRole("button", { name: "Retry websites" }).click();
+  await expect(page.getByText("No websites added. This session will be timer-only.")).toBeVisible();
+});
