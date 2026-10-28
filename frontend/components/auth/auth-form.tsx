@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/api/client";
 import type { User } from "@/lib/api/types";
 
-export function AuthForm({ mode }: { mode: "login" | "register" }) {
+export function AuthForm({ mode, returnTo }: { mode: "login" | "register"; returnTo?: "/setup" }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const isRegister = mode === "register";
@@ -27,7 +28,10 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             : {}),
         }),
       }),
-    onSuccess: () => router.replace("/dashboard"),
+    onSuccess: (user) => {
+      queryClient.setQueryData(["auth", "me"], user);
+      router.replace(returnTo ?? "/dashboard");
+    },
   });
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -90,7 +94,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         {isRegister ? "Already have an account?" : "New to FocusForge?"}{" "}
         <Link
           className="font-semibold text-primary hover:text-primary-hover"
-          href={isRegister ? "/login" : "/register"}
+          href={`${isRegister ? "/login" : "/register"}${returnTo ? "?next=%2Fsetup" : ""}`}
         >
           {isRegister ? "Sign in" : "Create an account"}
         </Link>

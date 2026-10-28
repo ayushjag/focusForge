@@ -2,9 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { apiRequest } from "@/lib/api/client";
+import { ApiError, apiRequest } from "@/lib/api/client";
 import type { User } from "@/lib/api/types";
+import release from "@/public/downloads/extension-release.json";
 
 type Connection = { status: "connected" | "signed-out" | "unavailable" | "not-detected"; userId?: string };
 
@@ -28,25 +30,29 @@ function checkExtension(): Promise<Connection> {
   });
 }
 
-export function ExtensionStatus() {
+export function ExtensionStatus({ showSetupLink = true }: { showSetupLink?: boolean }) {
   const user = useQuery({ queryKey: ["auth", "me"], queryFn: () => apiRequest<User>("/api/auth/me"), retry: false });
-  const connection = useQuery({ queryKey: ["extension", "connection"], queryFn: checkExtension, refetchInterval: 60_000, staleTime: 0 });
+  const connection = useQuery({ queryKey: ["extension", "connection"], queryFn: checkExtension, enabled: user.isSuccess, refetchInterval: 60_000, staleTime: 0 });
+  const signInRequired = user.error instanceof ApiError && user.error.status === 401;
   const mismatch = connection.data?.status === "connected" && user.data && connection.data.userId !== user.data.id;
   const connected = connection.data?.status === "connected" && Boolean(user.data) && !mismatch;
-  const label = connection.isFetching ? "Checking extension..." : mismatch ? "Different account connected" : connected ? "Extension connected" :
+  const label = user.isPending ? "Checking account..." : signInRequired ? "Sign in to verify connection" : user.isError ? "Account check unavailable" :
+    connection.isFetching ? "Checking extension..." : mismatch ? "Different account connected" : connected ? "Extension connected" :
     connection.data?.status === "signed-out" ? "Extension sign-in required" : connection.data?.status === "unavailable" ? "Extension sync unavailable" : "Extension not detected";
   return (
     <div className="flex items-start gap-3 border-t border-border pt-5" role="status">
       <ShieldCheck size={18} className={`mt-0.5 shrink-0 ${connected ? "text-primary" : "text-muted"}`} aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{label}</p>
-        {!connected && !connection.isFetching && <p className="mt-1 text-xs text-muted">
-          {mismatch || connection.data?.status === "signed-out" ? "Sign in to the extension with this website account." :
+        {!connected && !connection.isFetching && !user.isPending && <p className="mt-1 text-xs text-muted">
+          {signInRequired ? "Create an account or sign in on this website first." : user.isError ? "Check your connection and retry." :
+            mismatch || connection.data?.status === "signed-out" ? "Sign in to the extension with this website account." :
             connection.data?.status === "unavailable" ? "Blocking could not be verified. Check the extension and retry." :
-              "Load or reload FocusForge v0.8.0, then refresh this tab. Without it, only the timer will run."}
+              `Load or reload FocusForge v${release.version}, then refresh this tab. Without it, only the timer will run.`}
         </p>}
+        {!connected && showSetupLink && !user.isPending && <Link className="mt-2 inline-block text-xs font-semibold text-primary hover:text-primary-hover" href="/setup">Set up extension</Link>}
       </div>
-      <Button variant="ghost" size="icon" aria-label="Check extension connection" title="Check extension connection" disabled={connection.isFetching} onClick={() => connection.refetch()}>
+      <Button variant="ghost" size="icon" aria-label="Check extension connection" title="Check extension connection" disabled={connection.isFetching || user.isPending} onClick={() => { if (user.isError) void user.refetch(); else void connection.refetch(); }}>
         <RefreshCw size={15} className={connection.isFetching ? "animate-spin" : ""} />
       </Button>
     </div>

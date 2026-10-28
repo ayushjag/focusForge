@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { createHash } from "node:crypto";
 
 type Task = {
   id: string;
@@ -43,6 +44,7 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
     sessions: [] as Record<string, unknown>[],
     active: null as Record<string, unknown> | null,
     failLogin: false,
+    failAuth: false,
     failAnalytics: false,
     failWorkspace: false,
     startedDuration: 0,
@@ -57,9 +59,15 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
     const body = method === "GET" ? null : route.request().postDataJSON() as Record<string, unknown> | null;
 
     if (pathname === "/api/auth/login" && method === "POST") {
-      return state.failLogin ? fulfill(route, "Invalid email or password", 401) : fulfill(route, user);
+      if (state.failLogin) return fulfill(route, "Invalid email or password", 401);
+      state.failAuth = false;
+      return fulfill(route, user);
     }
-    if (pathname === "/api/auth/me") return fulfill(route, user);
+    if (pathname === "/api/auth/register" && method === "POST") {
+      state.failAuth = false;
+      return fulfill(route, user, 201);
+    }
+    if (pathname === "/api/auth/me") return state.failAuth ? fulfill(route, "Sign in required", 401) : fulfill(route, user);
     if (state.failWorkspace && pathname.startsWith("/api/backend/")) return fulfill(route, "Service unavailable", 503);
     if (pathname === "/api/backend/tasks") {
       if (method === "GET") return fulfill(route, state.tasks);
@@ -342,4 +350,50 @@ test("active session reports failed site loading and recovers in place", async (
   state.failSites = false;
   await page.getByRole("button", { name: "Retry websites" }).click();
   await expect(page.getByText("No websites added. This session will be timer-only.")).toBeVisible();
+});
+
+test("public setup download matches the packaged extension release", async ({ page }, testInfo) => {
+  const state = await mockApi(page);
+  state.failAuth = true;
+  await page.goto("/setup");
+  await expect(page.getByRole("heading", { name: "Set up website blocking" })).toBeVisible();
+  await expect(page.getByText("Sign in to verify connection")).toBeVisible();
+  const releaseResponse = await page.request.get("/downloads/extension-release.json");
+  expect(releaseResponse.ok()).toBe(true);
+  const release = await releaseResponse.json() as { version: string; file: string; sha256: string; bytes: number };
+  const downloadLink = page.getByRole("link", { name: "Download extension" });
+  await expect(downloadLink).toHaveAttribute("href", `/downloads/${release.file}`);
+  await expect(page.getByText(`Version ${release.version}`)).toBeVisible();
+  const zipResponse = await page.request.get(`/downloads/${release.file}`);
+  expect(zipResponse.ok()).toBe(true);
+  const zip = await zipResponse.body();
+  expect(zip.subarray(0, 4).toString("hex")).toBe("504b0304");
+  expect(zip.length).toBe(release.bytes);
+  expect(createHash("sha256").update(zip).digest("hex")).toBe(release.sha256);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("extension-setup.png"), fullPage: true });
+});
+
+test("a new user returns to setup and can verify the connected extension", async ({ page }) => {
+  const state = await mockApi(page);
+  state.failAuth = true;
+  await page.addInitScript(() => {
+    window.addEventListener("message", (event) => {
+      if (event.source === window && event.data?.type === "FOCUSFORGE_CHECK_EXTENSION") {
+        window.postMessage({ type: "FOCUSFORGE_EXTENSION_STATUS", requestId: event.data.requestId,
+          status: "connected", userId: "user-1" }, window.location.origin);
+      }
+    });
+  });
+  await page.goto("/setup");
+  await page.getByRole("link", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/register\?next=%2Fsetup$/);
+  await page.getByLabel("Email address").fill("tester@example.com");
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/setup$/);
+  await expect(page.getByText("Extension connected", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create account" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Open Focus Room" }).click();
+  await expect(page).toHaveURL(/\/focus$/);
 });

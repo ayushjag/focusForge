@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, ListTodo, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ShieldCheck, TimerReset, X } from "lucide-react";
+import { LayoutDashboard, ListTodo, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Puzzle, ShieldCheck, TimerReset, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -17,6 +17,7 @@ const navigation = [
   { label: "Tasks", icon: ListTodo, href: "/tasks" },
   { label: "Focus", icon: TimerReset, href: "/focus" },
   { label: "Blocked sites", icon: ShieldCheck, href: "/blocked-sites" },
+  { label: "Extension", icon: Puzzle, href: "/setup" },
 ];
 
 export function WorkspaceShell({ children }: { children: ReactNode }) {

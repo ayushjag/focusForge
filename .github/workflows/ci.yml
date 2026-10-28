@@ -71,6 +71,12 @@ jobs:
       - name: Install extension test dependencies
         run: npm ci --prefix extension
 
+      - name: Verify downloadable extension package
+        run: |
+          npm --prefix frontend run package:extension
+          unzip -t frontend/public/downloads/focusforge-extension.zip
+          git diff --exit-code -- frontend/public/downloads/focusforge-extension.zip frontend/public/downloads/extension-release.json
+
       - name: Generate database client
         run: npm --prefix backend run db:generate
 
