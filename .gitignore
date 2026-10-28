@@ -8,6 +8,9 @@ backend/.env
 /.neon
 /node_modules/
 /.next/
+/extension/dist/
+/extension/test-results/
+/extension/node_modules/
 
 # Local repository metadata and unrelated work
 /.local-git-backups/

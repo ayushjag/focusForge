@@ -2,13 +2,9 @@
   "manifest_version": 3,
   "name": "FocusForge",
   "description": "Stay focused during active FocusForge sessions.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "permissions": ["storage", "alarms", "declarativeNetRequest"],
-  "host_permissions": [
-    "<all_urls>",
-    "http://127.0.0.1:5000/*",
-    "http://localhost:5000/*"
-  ],
+  "host_permissions": ["<all_urls>"],
   "action": {
     "default_title": "FocusForge",
     "default_popup": "popup/popup.html"
@@ -19,7 +15,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+      "matches": ["https://focus-forge-ruddy.vercel.app/*"],
       "js": ["content/web-sync.js"],
       "run_at": "document_start"
     }

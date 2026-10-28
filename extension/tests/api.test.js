@@ -19,7 +19,7 @@ test("apiRequest sends JSON and bearer authentication", async () => {
     body: { value: 1 },
   });
 
-  assert.equal(capturedRequest.url, "http://127.0.0.1:5000/api/example");
+  assert.equal(capturedRequest.url, "https://focusforge-4qb1.onrender.com/api/example");
   assert.equal(capturedRequest.options.headers.Authorization, "Bearer test-token");
   assert.equal(capturedRequest.options.headers["Content-Type"], "application/json");
   assert.equal(capturedRequest.options.body, JSON.stringify({ value: 1 }));

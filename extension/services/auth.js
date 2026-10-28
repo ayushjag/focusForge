@@ -1,6 +1,7 @@
 import { apiRequest } from "./api.js";
+import { API_BASE_URL } from "../config.js";
 
-const AUTH_STORAGE_KEY = "focusForgeAuth";
+const AUTH_STORAGE_KEY = `focusForgeAuth:${API_BASE_URL}`;
 
 export const getStoredAuth = async () => {
   const result = await chrome.storage.local.get(AUTH_STORAGE_KEY);

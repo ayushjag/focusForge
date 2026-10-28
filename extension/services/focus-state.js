@@ -1,6 +1,7 @@
 import { apiRequest } from "./api.js";
+import { API_BASE_URL } from "../config.js";
 
-const STATE_STORAGE_KEY = "focusForgeBlockingState";
+const STATE_STORAGE_KEY = `focusForgeBlockingState:${API_BASE_URL}`;
 
 export const fetchBlockingState = async (accessToken) => {
   const response = await apiRequest("/api/extension/blocking-state", {

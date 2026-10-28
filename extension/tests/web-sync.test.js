@@ -5,7 +5,7 @@ test("web sync forwards only same-origin FocusForge signals", async () => {
   let listener;
   const messages = [];
   globalThis.window = {
-    location: { origin: "http://localhost:3000" },
+    location: { origin: "https://focus-forge-ruddy.vercel.app" },
     addEventListener: (_name, handler) => { listener = handler; },
   };
   globalThis.chrome = {

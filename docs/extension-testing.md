@@ -1,5 +1,57 @@
 # FocusForge Chrome Extension Testing
 
+## Deployed Pilot (Version 0.7.0)
+
+The source extension now targets the deployed services:
+
+- Website: https://focus-forge-ruddy.vercel.app
+- API: https://focusforge-4qb1.onrender.com
+
+Update your existing installation:
+
+1. Open `chrome://extensions` and reload the FocusForge card loaded from `D:\focusforge\extension`.
+2. Refresh the open Vercel website tab so Chrome loads the updated content script.
+3. Open the extension and confirm version `0.7.0`.
+4. Sign in using the same account as on the deployed website. The website's HttpOnly login cookie is separate from the extension's token. Old localhost logins are not reused.
+5. Add a site and start a focus session on the website. The popup should show the active session; navigating to the blocked domain should redirect to FocusForge.
+6. Add another domain while the session is active, without pressing the extension's Refresh button. It should start blocking automatically.
+7. Finish the session on the website and confirm the domain becomes available again.
+
+Only the exact production website receives the content script; arbitrary Vercel preview deployments and localhost do not signal the production extension. The one-minute alarm remains a synchronization fallback.
+
+Build a clean folder to share with a pilot tester:
+
+```powershell
+cd D:\focusforge\extension
+npm run build
+```
+
+Load `extension/dist/production` through Chrome's **Load unpacked** option. Do not load both the source and packaged production copies in the same Chrome profile. This remains an unpacked pilot extension, not a Chrome Web Store release. No local backend or Docker is needed for the deployed profile.
+
+For local development:
+
+```powershell
+npm run build:local
+```
+
+Load `extension/dist/local`, named **FocusForge Local**, and use the local backend on port 5000. Its login and cached state are stored separately from production. The historical module checks below describe this local development workflow; use the local package for those checks.
+
+The source `config.js` and `manifest.json` are production defaults. The build script creates each profile without changing source files. Output under `extension/dist` is ignored by Git.
+
+### Automated Deployed-Browser Verification
+
+Install the frontend's existing Playwright development dependencies and its bundled Chromium (`npx playwright install chromium --no-shell` from `frontend`). Run `npm ci` in `extension` for its test-only PostgreSQL cleanup client, then run:
+
+```powershell
+npm run test:deployed
+```
+
+This opt-in test uses an isolated Chromium profile, the actual extension, the live Vercel website, and the Render API. It registers a temporary test account, verifies its matching Neon row, signs into the popup, starts a session, adds a blocked site through the web UI, verifies a real navigation is redirected, finishes the session, and verifies unblocking. It removes its own account and profile afterward. Root Neon credentials are required only for cleanup; they are never packaged in the extension. Screenshots are saved under ignored `extension/test-results/deployed`.
+
+This live test is deliberately separate from CI's offline extension tests. It is not run against public services on every push. Free-host cold starts can delay the first request; wake the website/API and retry if the first connection fails.
+
+If this machine's DNS cannot resolve the Neon cleanup hostname, an explicit `FOCUSFORGE_TEST_DNS_SERVER` can select a resolver for this test process only. The TLS connection still verifies the real Neon hostname. This does not change Windows DNS settings or how the packaged extension connects to the API.
+
 ## Step 1: Manifest and Popup
 
 Status: ready to test.

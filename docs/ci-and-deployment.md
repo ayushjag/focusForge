@@ -37,7 +37,7 @@ Check out source -> install Node 22 -> npm ci
   -> start built servers -> real API integration test -> browser tests
 ```
 
-`npm ci` installs the dependency versions recorded in `package-lock.json` and fails if the lock file disagrees with `package.json`. The extension uses Node's built-in test runner and has no packages to install.
+`npm ci` installs the dependency versions recorded in `package-lock.json` and fails if the lock file disagrees with `package.json`. Extension logic tests use Node's built-in test runner. Its opt-in deployed-browser test also has a development-only PostgreSQL client for cleaning up the temporary account; that client is excluded from extension release packages.
 
 `prisma generate` creates the database client used by the code. `prisma migrate deploy` applies existing migration files. CI must not use `migrate dev`, because it should verify committed migrations rather than create new ones.
 
