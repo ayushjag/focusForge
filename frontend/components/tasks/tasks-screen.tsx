@@ -9,11 +9,13 @@ import {
   ListFilter,
   LoaderCircle,
   Pencil,
+  Play,
   Plus,
   Search,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 import { TaskForm, type TaskInput } from "@/components/tasks/task-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -221,6 +223,9 @@ export function TasksScreen() {
                   <p className="mt-2 flex items-center gap-1.5 text-xs text-muted"><CalendarClock size={14} />{formatSchedule(task)}</p>
                 </div>
                 <div className="flex items-center gap-1 self-end md:self-auto">
+                  {["PENDING", "SCHEDULED"].includes(task.status) && <Button asChild variant="ghost" size="icon" aria-label={`Focus on ${task.title}`} title="Start focus">
+                    <Link href={`/focus?taskId=${encodeURIComponent(task.id)}`}><Play size={17} /></Link>
+                  </Button>}
                   <Button variant="ghost" size="icon" onClick={() => openEdit(task)} aria-label={`Edit ${task.title}`} title="Edit task"><Pencil size={17} /></Button>
                   <Button variant="ghost" size="icon" className="hover:bg-coral/10 hover:text-[#a84e3d]" onClick={() => setDeletingTask(task)} aria-label={`Delete ${task.title}`} title="Delete task"><Trash2 size={17} /></Button>
                 </div>

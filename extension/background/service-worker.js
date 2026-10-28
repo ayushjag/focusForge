@@ -88,6 +88,13 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.type === "CHECK_CONNECTION") {
+    syncBlockingState().then(async (state) => {
+      const auth = await getStoredAuth();
+      sendResponse(state && auth ? { status: "connected", userId: auth.user.id } : { status: "signed-out" });
+    }).catch(() => sendResponse({ status: "unavailable" }));
+    return true;
+  }
   if (message.type === "PING") {
     sendResponse({
       ready: true,

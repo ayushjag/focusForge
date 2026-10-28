@@ -1,20 +1,19 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clock3, History, LoaderCircle, Play, ShieldCheck, Square } from "lucide-react";
+import { CheckCircle2, Clock3, History, LoaderCircle, ShieldCheck, Square } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FocusSetup } from "./focus-setup";
 import { apiRequest } from "@/lib/api/client";
 import type { FocusSession, Task } from "@/lib/api/types";
 import { requestExtensionSync } from "@/lib/extension-sync";
 import { cn } from "@/lib/utils";
-
-const durations = [25, 45, 60];
 
 function formatClock(totalSeconds: number) {
   const hours = Math.floor(totalSeconds / 3600);
@@ -43,8 +42,8 @@ const historyBadge: Record<FocusSession["status"], "green" | "yellow" | "pink" |
 
 export function FocusScreen() {
   const queryClient = useQueryClient();
-  const [selectedTaskId, setSelectedTaskId] = useState("");
-  const [duration, setDuration] = useState(25);
+  const params = useSearchParams();
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [now, setNow] = useState(0);
   const [cancelOpen, setCancelOpen] = useState(false);
 
@@ -103,7 +102,7 @@ export function FocusScreen() {
   }, [activeSession]);
 
   const openTasks = (tasksQuery.data ?? []).filter((task) => ["PENDING", "SCHEDULED"].includes(task.status));
-  const chosenTaskId = selectedTaskId || openTasks[0]?.id || "";
+  const chosenTaskId = selectedTaskId ?? params.get("taskId") ?? openTasks[0]?.id ?? "";
   const remainingSeconds = activeSession && now
     ? Math.max(0, Math.ceil((new Date(activeSession.plannedEnd).getTime() - now) / 1_000))
     : activeSession?.plannedDurationMinutes ? activeSession.plannedDurationMinutes * 60 : 0;
@@ -137,15 +136,19 @@ export function FocusScreen() {
           <button onClick={() => { startSession.reset(); completeSession.reset(); cancelSession.reset(); }} className="font-bold">Dismiss</button>
         </div>
       )}
+      {activeQuery.isError && <div className="mt-5 text-sm text-[#a84e3d]">
+        <p role="alert">Session status could not be loaded. Check it before starting another session.</p>
+        <Button variant="ghost" onClick={() => activeQuery.refetch()}>Retry session status</Button>
+      </div>}
 
-      <div className="mt-7 grid gap-5 xl:grid-cols-[1.35fr_0.85fr]">
+      <div className="mt-7 grid items-start gap-8 xl:grid-cols-[1.35fr_0.85fr]">
         {activeSession ? (
           <Card className="bg-[#ffe6a3] p-1">
             <CardHeader className="flex flex-row items-start justify-between gap-4 pb-3">
               <div>
                 <Badge variant="yellow">Deep focus</Badge>
                 <CardTitle className="mt-4 text-2xl">{sessionTask?.title ?? "Focused work"}</CardTitle>
-                <CardDescription className="text-[#695b35]">Distraction blocking is synchronized with your extension.</CardDescription>
+                <CardDescription className="text-[#695b35]">Your protected block of time.</CardDescription>
               </div>
               <span className="flex size-11 items-center justify-center rounded-full bg-white/75"><ShieldCheck size={21} /></span>
             </CardHeader>
@@ -166,40 +169,14 @@ export function FocusScreen() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="bg-[#cfe8e4] p-1">
-            <CardHeader>
-              <Badge variant="green">New session</Badge>
-              <CardTitle className="mt-4 text-2xl">What will you focus on?</CardTitle>
-              <CardDescription className="text-[#4c6964]">Choose one open task and a protected block of time.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold" htmlFor="focus-task">Task</label>
-                <Select value={chosenTaskId} onValueChange={setSelectedTaskId} disabled={!openTasks.length}>
-                  <SelectTrigger id="focus-task" className="border-0 bg-white/85"><SelectValue placeholder="Choose a task" /></SelectTrigger>
-                  <SelectContent>
-                    {openTasks.map((task) => <SelectItem key={task.id} value={task.id}>{task.title}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {!tasksQuery.isPending && openTasks.length === 0 && <p className="text-xs font-medium text-[#4c6964]">Create an open task before starting a session.</p>}
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-bold">Duration</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {durations.map((minutes) => (
-                    <button key={minutes} onClick={() => setDuration(minutes)} className={cn("h-12 rounded-lg bg-white/65 text-sm font-bold transition", duration === minutes && "bg-foreground text-white")}>{minutes} min</button>
-                  ))}
-                </div>
-              </div>
-              <Button className="w-full" size="default" disabled={!chosenTaskId || startSession.isPending} onClick={() => startSession.mutate({ taskId: chosenTaskId, minutes: duration })}>
-                {startSession.isPending ? <LoaderCircle className="animate-spin" size={18} /> : <Play size={18} />}
-                Start focus session
-              </Button>
-            </CardContent>
-          </Card>
+          <FocusSetup tasks={openTasks} selectedTaskId={chosenTaskId} onSelectTask={setSelectedTaskId}
+            onStart={(minutes) => startSession.mutate({ taskId: chosenTaskId, minutes })}
+            pending={startSession.isPending || activeQuery.isPending || activeQuery.isError}
+            loading={tasksQuery.isPending} loadError={tasksQuery.error?.message}
+            onRetry={() => { void tasksQuery.refetch(); }} />
         )}
 
-        <Card className="bg-[#f3d7e5]">
+        <section className="min-w-0 border-t border-border pt-6 xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0" aria-label="Recent sessions">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div><CardTitle>Recent sessions</CardTitle><CardDescription className="text-[#745767]">Your latest focus activity</CardDescription></div>
@@ -222,7 +199,7 @@ export function FocusScreen() {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </section>
       </div>
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>

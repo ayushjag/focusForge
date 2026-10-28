@@ -108,7 +108,7 @@ Reference: https://www.prisma.io/docs/orm/v6/overview/databases/neon#resolving-c
 
 ## 5. Extension and onboarding checkpoint
 
-The extension's production profile now targets `https://focusforge-4qb1.onrender.com` and synchronizes with `https://focus-forge-ruddy.vercel.app`. Version `0.7.0` can be reloaded from the source folder or packaged with `npm run build` from `extension`. A separate `npm run build:local` profile retains localhost development. Follow `extension-testing.md` to verify the deployed flow before inviting testers.
+The extension's production profile now targets `https://focusforge-4qb1.onrender.com` and synchronizes with `https://focus-forge-ruddy.vercel.app`. Version `0.8.0` can be reloaded from the source folder or packaged with `npm run build` from `extension`. A separate `npm run build:local` profile retains localhost development. Follow `extension-testing.md` to verify the deployed flow before inviting testers.
 
 The setup/connection experience remains a later product milestone. The website's login cookie and extension's login token are separate, so users must sign into the same account in both places.
 

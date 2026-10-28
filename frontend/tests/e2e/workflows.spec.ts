@@ -46,6 +46,9 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
     failAnalytics: false,
     failWorkspace: false,
     startedDuration: 0,
+    startedTaskId: "",
+    sites: [] as { id: string; domain: string; enabled: boolean }[],
+    failSites: false,
   };
 
   await page.route("**/api/**", async (route) => {
@@ -76,9 +79,10 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
     if (pathname === "/api/backend/sessions" && method === "GET") return fulfill(route, state.sessions);
     if (pathname === "/api/backend/sessions/start" && method === "POST") {
       state.startedDuration = Number(body?.durationMinutes);
+      state.startedTaskId = String(body?.taskId);
       const actualStart = new Date().toISOString();
       const session = {
-        id: "session-1", taskId: body?.taskId, task: state.tasks[0],
+        id: "session-1", taskId: body?.taskId, task: state.tasks.find((task) => task.id === body?.taskId),
         plannedDurationMinutes: state.startedDuration,
         plannedEnd: new Date(Date.now() + state.startedDuration * 60_000).toISOString(),
         actualStart, actualEnd: null, status: "ACTIVE",
@@ -93,7 +97,21 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
       state.sessions[0] = completed;
       return fulfill(route, completed);
     }
-    if (pathname === "/api/backend/blocked-websites" && method === "GET") return fulfill(route, []);
+    if (pathname === "/api/backend/blocked-websites") {
+      if (state.failSites) return fulfill(route, "Sites unavailable", 503);
+      if (method === "GET") return fulfill(route, state.sites);
+      if (method === "POST") {
+        const site = { id: `site-${state.sites.length + 1}`, domain: String(body?.domain), enabled: true };
+        state.sites.push(site);
+        return fulfill(route, site, 201);
+      }
+    }
+    if (pathname.startsWith("/api/backend/blocked-websites/") && method === "PATCH") {
+      const site = state.sites.find((site) => site.id === pathname.split("/").at(-1));
+      if (!site) return fulfill(route, "Site not found", 404);
+      site.enabled = Boolean(body?.enabled);
+      return fulfill(route, site);
+    }
     if (pathname === "/api/backend/analytics/summary" && method === "GET") {
       return state.failAnalytics ? fulfill(route, "Analytics unavailable", 503) : fulfill(route, summary());
     }
@@ -165,4 +183,113 @@ test("dashboard treats unavailable workspace data as unavailable", async ({ page
   await expect(page.getByText("Site list could not be loaded")).toBeVisible();
   await expect(page.getByText("Activity could not be loaded.")).toBeVisible();
   await expect(page.getByText("Protection is active now")).toHaveCount(0);
+});
+
+test("sets up a session with a new task, custom duration and websites without leaving focus room", async ({ page }) => {
+  const state = await mockApi(page);
+  await page.goto("/focus");
+  await expect(page.getByRole("button", { name: "Start focus session" })).toBeDisabled();
+  await page.getByRole("button", { name: "New task" }).click();
+  await page.getByLabel("New task title").fill("Study databases");
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("combobox", { name: "Task", exact: true })).toContainText("Study databases");
+  await page.getByRole("button", { name: "Custom", exact: true }).click();
+  await page.getByLabel("Minutes (1-480)").fill("35");
+  await page.getByRole("textbox", { name: "Website domain or URL" }).fill("youtube.com");
+  await page.getByRole("button", { name: "Add site", exact: true }).click();
+  await expect(page.getByRole("switch", { name: "Pause blocking for youtube.com" })).toBeChecked();
+  await page.getByRole("switch", { name: "Pause blocking for youtube.com" }).click();
+  await expect(page.getByRole("switch", { name: "Enable blocking for youtube.com" })).not.toBeChecked();
+  await page.getByRole("switch", { name: "Enable blocking for youtube.com" }).click();
+  await expect(page.getByRole("switch", { name: "Pause blocking for youtube.com" })).toBeChecked();
+  await page.getByRole("button", { name: "Start focus session" }).click();
+  await expect(page.getByRole("button", { name: "Finish session" })).toBeVisible();
+  expect(state.startedDuration).toBe(35);
+  expect(state.startedTaskId).toBe(state.tasks[0].id);
+  expect(state.sites[0].enabled).toBe(true);
+  await expect(page).toHaveURL(/\/focus$/);
+});
+
+test("validates inline task, duration and domain inputs", async ({ page }) => {
+  const state = await mockApi(page, [task("Prepare release")]);
+  await page.goto("/focus");
+  await page.getByRole("button", { name: "New task" }).click();
+  await page.getByLabel("New task title").fill("   ");
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Enter a task title" })).toBeVisible();
+  expect(state.tasks).toHaveLength(1);
+  await page.getByRole("button", { name: "Cancel new task" }).click();
+  await page.getByRole("button", { name: "Custom", exact: true }).click();
+  for (const invalid of ["0", "481", "2.5", ""]) {
+    await page.getByLabel("Minutes (1-480)").fill(invalid);
+    await expect(page.getByRole("button", { name: "Start focus session" })).toBeDisabled();
+  }
+  await page.getByRole("button", { name: "50 min", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Start focus session" })).toBeEnabled();
+  await page.getByRole("textbox", { name: "Website domain or URL" }).fill("not-a-domain");
+  await page.getByRole("button", { name: "Add site", exact: true }).click();
+  await expect(page.getByText("Enter a public domain, such as youtube.com.")).toBeVisible();
+  expect(state.sites).toHaveLength(0);
+});
+
+test("task focus shortcut preselects that task", async ({ page }) => {
+  const state = await mockApi(page, [task("First task"), task("Second task", "task-2")]);
+  await page.goto("/tasks");
+  await page.getByRole("link", { name: "Focus on Second task" }).click();
+  await expect(page.getByRole("combobox", { name: "Task", exact: true })).toContainText("Second task");
+  await page.getByRole("button", { name: "Start focus session" }).click();
+  await expect(page.getByRole("button", { name: "Finish session" })).toBeVisible();
+  expect(state.startedTaskId).toBe("task-2");
+});
+
+test("does not silently select a different task for an invalid focus shortcut", async ({ page }) => {
+  await mockApi(page, [task("First task")]);
+  await page.goto("/focus?taskId=deleted-task");
+  await expect(page.getByRole("button", { name: "Start focus session" })).toBeDisabled();
+  await expect(page.getByRole("combobox", { name: "Task", exact: true })).toContainText("Choose a task");
+});
+
+test("site load errors can be retried from focus room", async ({ page }) => {
+  const state = await mockApi(page, [task("Prepare release")]);
+  state.failSites = true;
+  await page.goto("/focus");
+  await expect(page.getByText("Websites could not be loaded.")).toBeVisible();
+  state.failSites = false;
+  await page.getByRole("button", { name: "Retry websites" }).click();
+  await expect(page.getByText("No websites added. This session will be timer-only.")).toBeVisible();
+});
+
+test("shows actual extension connection and detects another account", async ({ page }) => {
+  await mockApi(page, [task("Prepare release")]);
+  await page.addInitScript(() => {
+    window.addEventListener("message", (event) => {
+      if (event.source === window && event.data?.type === "FOCUSFORGE_CHECK_EXTENSION") {
+        window.postMessage({ type: "FOCUSFORGE_EXTENSION_STATUS", requestId: event.data.requestId,
+          status: "connected", userId: window.location.hash === "#other" ? "other-user" : "user-1" }, window.location.origin);
+      }
+    });
+  });
+  await page.goto("/focus");
+  await expect(page.getByText("Extension connected", { exact: true })).toBeVisible();
+  await page.evaluate(() => { window.location.hash = "other"; });
+  await page.getByRole("button", { name: "Check extension connection" }).click();
+  await expect(page.getByText("Different account connected")).toBeVisible();
+});
+
+test("missing extension is shown honestly, without preventing timer-only sessions", async ({ page }) => {
+  await mockApi(page, [task("Prepare release")]);
+  await page.goto("/focus");
+  await expect(page.getByText("Checking extension...")).toBeVisible();
+  await expect(page.getByText("Extension not detected", { exact: true })).toBeVisible({ timeout: 16_000 });
+  await expect(page.getByRole("button", { name: "Start focus session" })).toBeEnabled();
+});
+
+test("focus setup fits the viewport", async ({ page }, testInfo) => {
+  const state = await mockApi(page, [task("Prepare database interview notes")]);
+  state.sites.push({ id: "site-1", domain: "youtube.com", enabled: true }, { id: "site-2", domain: "reddit.com", enabled: false });
+  await page.goto("/focus");
+  await expect(page.getByText("youtube.com", { exact: true })).toBeVisible();
+  await expect(page.getByText("Extension not detected", { exact: true })).toBeVisible({ timeout: 16_000 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("focus-setup.png"), fullPage: true });
 });

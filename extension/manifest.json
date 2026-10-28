@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "FocusForge",
   "description": "Stay focused during active FocusForge sessions.",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "permissions": ["storage", "alarms", "declarativeNetRequest"],
   "host_permissions": ["<all_urls>"],
   "action": {

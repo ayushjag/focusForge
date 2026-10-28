@@ -1,6 +1,11 @@
 # FocusForge Chrome Extension Testing
 
-## Deployed Pilot (Version 0.7.0)
+## Deployed Pilot (Version 0.8.0)
+
+Version 0.8.0 adds a website connection check that verifies backend sync and
+returns only the extension account ID. The Focus Room compares that ID with the
+website account and reports mismatches, missing sign-in, and unavailable sync.
+See [Unified Focus Room](unified-focus-room.md) for the one-page setup workflow.
 
 The source extension now targets the deployed services:
 
@@ -11,7 +16,7 @@ Update your existing installation:
 
 1. Open `chrome://extensions` and reload the FocusForge card loaded from `D:\focusforge\extension`.
 2. Refresh the open Vercel website tab so Chrome loads the updated content script.
-3. Open the extension and confirm version `0.7.0`.
+3. Open the extension and confirm version `0.8.0`.
 4. Sign in using the same account as on the deployed website. The website's HttpOnly login cookie is separate from the extension's token. Old localhost logins are not reused.
 5. Add a site and start a focus session on the website. The popup should show the active session; navigating to the blocked domain should redirect to FocusForge.
 6. Add another domain while the session is active, without pressing the extension's Refresh button. It should start blocking automatically.
