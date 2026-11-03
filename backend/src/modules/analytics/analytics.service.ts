@@ -2,7 +2,8 @@ import { TaskStatus } from "@prisma/client";
 import prisma from "../../lib/prisma.js";
 import { AppError } from "../../shared/errors/app-error.js";
 import { expireElapsedSession } from "../sessions/session.service.js";
-import { buildAnalyticsSummary, createDayKeyFormatter } from "./analytics.summary.js";
+import { createDayKeyFormatter } from "../../shared/time/focus-time.js";
+import { buildAnalyticsSummary } from "./analytics.summary.js";
 
 export const getAnalyticsSummary = async (userId: string, requestedTimezone?: string) => {
   const user = await prisma.user.findUnique({

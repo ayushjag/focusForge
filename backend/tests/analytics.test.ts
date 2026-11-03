@@ -24,8 +24,8 @@ test("summary groups sessions by the chosen timezone and counts completed focus 
   assert.equal(summary.focusMinutes, 22);
   assert.deepEqual(summary.sessions, { active: 0, completed: 3, cancelled: 1, expired: 1 });
   assert.deepEqual(summary.tasks, { total: 4, completed: 1, missed: 1, completionRate: 25 });
-  assert.equal(summary.daily.find((day) => day.date === "2026-10-22")?.focusMinutes, 20);
-  assert.equal(summary.daily.find((day) => day.date === "2026-10-23")?.focusMinutes, 2);
+  assert.equal(summary.daily.find((day) => day.date === "2026-10-22")?.focusMinutes, 10);
+  assert.equal(summary.daily.find((day) => day.date === "2026-10-23")?.focusMinutes, 12);
 });
 
 test("summary returns seven zero-filled days for a new account", () => {

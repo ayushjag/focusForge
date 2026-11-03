@@ -118,6 +118,16 @@ test("Next auth cookie and proxy enforce account ownership through Fastify", asy
     assert.equal(otherSummary.response.status, 200);
     assert.equal(ownSummary.body.data?.tasks.total, 1);
     assert.equal(otherSummary.body.data?.tasks.total, 0);
+    const savedGoal = await request<{ today: { targetMinutes: number } }>("/api/backend/goals/daily", withCookie(cookies[0], {
+      method: "PUT",
+      body: json({ targetMinutes: 30 }),
+    }));
+    assert.equal(savedGoal.response.status, 200);
+    assert.equal(savedGoal.body.data?.today.targetMinutes, 30);
+    const ownGoal = await request<{ today: { targetMinutes: number } }>("/api/backend/goals/daily", withCookie(cookies[0]));
+    const otherGoal = await request<{ today: { targetMinutes: number | null } }>("/api/backend/goals/daily", withCookie(cookies[1]));
+    assert.equal(ownGoal.body.data?.today.targetMinutes, 30);
+    assert.equal(otherGoal.body.data?.today.targetMinutes, null);
     const invalidTimezone = await request("/api/backend/analytics/summary?timezone=Mars%2FPhobos", withCookie(cookies[0]));
     assert.equal(invalidTimezone.response.status, 400);
     assert.equal(invalidTimezone.body.error?.code, "INVALID_TIMEZONE");

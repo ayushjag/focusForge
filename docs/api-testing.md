@@ -290,7 +290,9 @@ Status: backend complete and connected to the dashboard.
 6. Mark a task completed and run the request again. `tasks.completed` and `tasks.completionRate` update; `tasks.missed` counts tasks marked missed. These task counts cover all current tasks, not only the last seven days.
 7. Try an invalid timezone such as `?timezone=Mars/Phobos`; expect `400 INVALID_TIMEZONE`. Remove the bearer token; expect `401 UNAUTHORIZED`.
 
-Sessions are assigned to the calendar date on which they started in the selected timezone. A session crossing midnight is counted on its start date. `focusMinutes` is rounded to whole minutes after summing completed-session durations for each day. No analytics table or migration is required.
+Session outcome counts are assigned to the calendar date on which each session started. Completed focus time is split across local calendar dates when a session crosses midnight, matching daily goals. `focusMinutes` is rounded to whole minutes after summing completed-session durations for each day. No analytics table or migration is required.
+
+For the daily goals backend and its Postman sequence, see [Daily Goals: Backend Test](daily-goals-testing.md).
 
 ## Module 9: Real Web Proxy Integration
 

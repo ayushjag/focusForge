@@ -372,6 +372,32 @@
       ]
     },
     {
+      "name": "Daily Goals",
+      "item": [
+        {
+          "name": "GET Daily Goal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/goals/daily?days=14", "host": ["{{baseUrl}}"], "path": ["api", "goals", "daily"], "query": [{ "key": "days", "value": "14" }] },
+            "description": "Returns today's target and focus time, current/longest streaks, and 1-90 days of history. Defaults to 14 days."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Daily Goal",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"targetMinutes\": 30\n}" },
+            "url": { "raw": "{{baseUrl}}/api/goals/daily", "host": ["{{baseUrl}}"], "path": ["api", "goals", "daily"] },
+            "description": "Creates or changes today's goal. Accepts 1-480 whole minutes; changing it does not rewrite previous days."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Extension",
       "item": [
         {

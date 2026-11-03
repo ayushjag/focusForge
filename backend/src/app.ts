@@ -6,6 +6,7 @@ import { registerAuthRoutes } from "./modules/auth/auth.routes.js";
 import { registerAnalyticsRoutes } from "./modules/analytics/analytics.routes.js";
 import { registerBlockedWebsiteRoutes } from "./modules/blocked-websites/blocked-website.routes.js";
 import { registerDatabaseRoutes } from "./modules/database/database.routes.js";
+import { registerDailyGoalRoutes } from "./modules/daily-goals/daily-goal.routes.js";
 import { registerExtensionRoutes } from "./modules/extension/extension.routes.js";
 import { registerHealthRoutes } from "./modules/health/health.routes.js";
 import { registerSessionRoutes } from "./modules/sessions/session.routes.js";
@@ -22,6 +23,7 @@ await app.register(fastifyJwt, {
 });
 app.register(registerHealthRoutes);
 app.register(registerDatabaseRoutes);
+app.register(registerDailyGoalRoutes);
 app.register(registerAuthRoutes);
 app.register(registerAnalyticsRoutes);
 app.register(registerTaskRoutes);

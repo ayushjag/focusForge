@@ -1,4 +1,5 @@
 import type { AnalyticsSummary, DailyAnalytics, SessionFact } from "./analytics.types.js";
+import { createDayKeyFormatter, creditedMillisecondsByDay } from "../../shared/time/focus-time.js";
 
 type SummaryInput = {
   now: Date;
@@ -7,22 +8,6 @@ type SummaryInput = {
   totalTasks: number;
   completedTasks: number;
   missedTasks: number;
-};
-
-export const createDayKeyFormatter = (timezone: string) => {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-
-  return (date: Date): string => {
-    const parts = Object.fromEntries(
-      formatter.formatToParts(date).map(({ type, value }) => [type, value]),
-    );
-    return `${parts.year}-${parts.month}-${parts.day}`;
-  };
 };
 
 export const buildAnalyticsSummary = ({
@@ -44,7 +29,7 @@ export const buildAnalyticsSummary = ({
     expiredSessions: 0,
   }));
   const daysByKey = new Map(daily.map((day) => [day.date, day]));
-  const millisecondsByKey = new Map<string, number>();
+  const millisecondsByKey = creditedMillisecondsByDay(sessions, timezone);
 
   for (const session of sessions) {
     const key = dayKey(session.actualStart);
@@ -57,10 +42,6 @@ export const buildAnalyticsSummary = ({
         break;
       case "COMPLETED":
         day.completedSessions++;
-        if (session.actualEnd) {
-          const elapsed = Math.max(0, session.actualEnd.getTime() - session.actualStart.getTime());
-          millisecondsByKey.set(key, (millisecondsByKey.get(key) ?? 0) + elapsed);
-        }
         break;
       case "CANCELLED":
         day.cancelledSessions++;
