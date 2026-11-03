@@ -24,6 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { apiRequest } from "@/lib/api/client";
 import type { AnalyticsSummary, BlockedWebsite, FocusSession, Task } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
+import { DailyGoalsPanel } from "./daily-goals-panel";
 
 function formatDuration(minutes: number) {
   if (minutes < 60) return `${minutes}m`;
@@ -117,7 +118,9 @@ export function DashboardScreen() {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 space-y-5">
-          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Productivity summary">
+          <DailyGoalsPanel />
+
+          <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Productivity summary">
             {stats.map(({ label, value, detail, icon: Icon, accent }) => (
               <Card key={label} className="border border-black/[0.04] shadow-[0_8px_28px_rgba(24,30,24,0.035)]">
                 <CardContent className="p-4">

@@ -65,6 +65,7 @@ export function FocusScreen() {
       queryClient.invalidateQueries({ queryKey: ["sessions"] }),
       queryClient.invalidateQueries({ queryKey: ["sessions", "active"] }),
       queryClient.invalidateQueries({ queryKey: ["analytics", "summary"] }),
+      queryClient.invalidateQueries({ queryKey: ["goals", "daily"] }),
     ]);
   }, [queryClient]);
   const startSession = useMutation({

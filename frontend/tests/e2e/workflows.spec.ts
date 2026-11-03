@@ -34,6 +34,28 @@ function summary() {
   };
 }
 
+function dailyGoals(targetMinutes: number | null, todayMinutes: number) {
+  const today = new Date();
+  const history = Array.from({ length: 90 }, (_, index) => {
+    const date = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - (89 - index))).toISOString().slice(0, 10);
+    const focusMinutes = index === 89 ? todayMinutes : index === 88 ? 85 : 0;
+    const target = targetMinutes;
+    return { date, focusMinutes, targetMinutes: target, achieved: target !== null && focusMinutes >= target };
+  });
+  const todayRow = history.at(-1)!;
+  return {
+    timezone: "UTC",
+    today: {
+      ...todayRow,
+      remainingMinutes: targetMinutes === null ? null : Math.max(0, targetMinutes - todayMinutes),
+      progressPercent: targetMinutes === null ? null : Math.min(100, Math.round((todayMinutes / targetMinutes) * 100)),
+    },
+    currentStreak: todayRow.achieved ? 2 : history.at(-2)!.achieved ? 1 : 0,
+    longestStreak: 2,
+    history,
+  };
+}
+
 function fulfill(route: Route, data: unknown, status = 200) {
   return route.fulfill({ status, contentType: "application/json", body: JSON.stringify(status >= 400 ? { success: false, message: String(data) } : { success: true, data }) });
 }
@@ -51,6 +73,9 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
     startedTaskId: "",
     sites: [] as { id: string; domain: string; enabled: boolean }[],
     failSites: false,
+    goalTarget: 60 as number | null,
+    goalFocusMinutes: 35,
+    failGoals: false,
   };
 
   await page.route("**/api/**", async (route) => {
@@ -103,6 +128,7 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
       const completed = { ...state.active, actualEnd: new Date().toISOString(), status: "COMPLETED" };
       state.active = null;
       state.sessions[0] = completed;
+      state.goalFocusMinutes += state.startedDuration;
       return fulfill(route, completed);
     }
     if (pathname === "/api/backend/blocked-websites") {
@@ -122,6 +148,14 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
     }
     if (pathname === "/api/backend/analytics/summary" && method === "GET") {
       return state.failAnalytics ? fulfill(route, "Analytics unavailable", 503) : fulfill(route, summary());
+    }
+    if (pathname === "/api/backend/goals/daily") {
+      if (state.failGoals) return fulfill(route, "Daily goals unavailable", 503);
+      if (method === "GET") return fulfill(route, dailyGoals(state.goalTarget, state.goalFocusMinutes));
+      if (method === "PUT") {
+        state.goalTarget = Number(body?.targetMinutes);
+        return fulfill(route, dailyGoals(state.goalTarget, state.goalFocusMinutes));
+      }
     }
     return fulfill(route, "Unexpected API request", 404);
   });
@@ -191,6 +225,54 @@ test("dashboard treats unavailable workspace data as unavailable", async ({ page
   await expect(page.getByText("Site list could not be loaded")).toBeVisible();
   await expect(page.getByText("Activity could not be loaded.")).toBeVisible();
   await expect(page.getByText("Protection is active now")).toHaveCount(0);
+});
+
+test("dashboard shows studied minutes in the activity grid and edits today's goal", async ({ page }, testInfo) => {
+  const state = await mockApi(page);
+  await page.goto("/dashboard");
+  const goal = page.getByRole("region", { name: "Daily goal" });
+  await expect(goal.getByText(/35\s*\/\s*60 min/)).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("daily-goals-desktop.png"), fullPage: true });
+  const grid = page.getByRole("group", { name: "Daily focused minutes" });
+  await expect(grid.getByRole("button")).toHaveCount(90);
+  await grid.locator('button[data-minutes="85"]').click();
+  await expect(page.getByText("1 hr 25 min")).toBeVisible();
+  await page.getByRole("button", { name: "Edit daily goal" }).click();
+  await page.getByLabel("Daily target (minutes)").fill("0");
+  await page.getByRole("button", { name: "Save goal" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "1 to 480" })).toBeVisible();
+  expect(state.goalTarget).toBe(60);
+  await page.getByLabel("Daily target (minutes)").fill("90");
+  await page.getByRole("button", { name: "Save goal" }).click();
+  await expect(goal.getByText(/35\s*\/\s*90 min/)).toBeVisible();
+  expect(state.goalTarget).toBe(90);
+});
+
+test("dashboard can create the first goal and retry a failed goal request", async ({ page }) => {
+  const state = await mockApi(page);
+  state.goalTarget = null;
+  state.failGoals = true;
+  await page.goto("/dashboard");
+  await expect(page.getByText("Daily goals could not be loaded.")).toBeVisible();
+  state.failGoals = false;
+  await page.getByText("Daily goals could not be loaded.").locator("..").getByRole("button", { name: "Try again" }).click();
+  await page.getByRole("button", { name: "Set daily goal" }).click();
+  await page.getByLabel("Daily target (minutes)").fill("45");
+  await page.getByRole("button", { name: "Save goal" }).click();
+  await expect(page.getByRole("region", { name: "Daily goal" }).getByText(/35\s*\/\s*45 min/)).toBeVisible();
+  expect(state.goalTarget).toBe(45);
+});
+
+test("study activity stays usable on a narrow screen", async ({ page }, testInfo) => {
+  await mockApi(page);
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto("/dashboard");
+  const grid = page.getByRole("group", { name: "Daily focused minutes" });
+  await expect(grid).toBeVisible();
+  await expect(grid.getByRole("button").last()).toBeInViewport();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+  expect(overflow).toBe(false);
+  await page.screenshot({ path: testInfo.outputPath("daily-goals-mobile.png"), fullPage: true });
 });
 
 test("sets up a session with a new task, custom duration and websites without leaving focus room", async ({ page }) => {

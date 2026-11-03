@@ -52,3 +52,21 @@ export type AnalyticsSummary = {
     expiredSessions: number;
   }[];
 };
+
+export type DailyGoalDay = {
+  date: string;
+  targetMinutes: number | null;
+  focusMinutes: number;
+  achieved: boolean;
+};
+
+export type DailyGoalSummary = {
+  timezone: string;
+  today: DailyGoalDay & {
+    remainingMinutes: number | null;
+    progressPercent: number | null;
+  };
+  currentStreak: number;
+  longestStreak: number;
+  history: DailyGoalDay[];
+};
