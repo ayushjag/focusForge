@@ -56,6 +56,28 @@ function dailyGoals(targetMinutes: number | null, todayMinutes: number) {
   };
 }
 
+function weeklyReview(weekStart: string, priorities: string[]) {
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(`${weekStart}T12:00:00.000Z`);
+    date.setUTCDate(date.getUTCDate() + index);
+    const focusMinutes = index === 0 ? 45 : index === 2 ? 30 : 0;
+    return {
+      date: date.toISOString().slice(0, 10), focusMinutes, targetMinutes: 30,
+      goalMet: focusMinutes >= 30, completedSessions: focusMinutes ? 1 : 0,
+      cancelledSessions: 0, expiredSessions: 0, completedTasks: index === 2 ? 1 : 0,
+    };
+  });
+  const nextWeek = new Date(`${weekStart}T12:00:00.000Z`);
+  nextWeek.setUTCDate(nextWeek.getUTCDate() + 7);
+  return {
+    timezone: "UTC", weekStart, weekEnd: days[6].date, days,
+    totals: { focusMinutes: 75, completedSessions: 2, cancelledSessions: 0, expiredSessions: 0, completedTasks: 1, goalsMet: 2 },
+    previousWeek: { focusMinutes: 50, deltaMinutes: 25, changePercent: 50 },
+    bestDay: { date: days[0].date, focusMinutes: 45 },
+    nextWeekPlan: { weekStart: nextWeek.toISOString().slice(0, 10), priorities },
+  };
+}
+
 function fulfill(route: Route, data: unknown, status = 200) {
   return route.fulfill({ status, contentType: "application/json", body: JSON.stringify(status >= 400 ? { success: false, message: String(data) } : { success: true, data }) });
 }
@@ -76,6 +98,9 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
     goalTarget: 60 as number | null,
     goalFocusMinutes: 35,
     failGoals: false,
+    failReports: false,
+    weeklyPlan: [] as string[],
+    planSaves: 0,
   };
 
   await page.route("**/api/**", async (route) => {
@@ -157,6 +182,16 @@ async function mockApi(page: Page, initialTasks: Task[] = []) {
         return fulfill(route, dailyGoals(state.goalTarget, state.goalFocusMinutes));
       }
     }
+    if (pathname === "/api/backend/reports/weekly" && method === "GET") {
+      if (state.failReports) return fulfill(route, "Weekly review unavailable", 503);
+      const requested = new URL(route.request().url()).searchParams.get("weekStart");
+      return fulfill(route, weeklyReview(requested ?? "2026-11-02", requested ? [] : state.weeklyPlan));
+    }
+    if (pathname === "/api/backend/reports/weekly/plan" && method === "PUT") {
+      state.weeklyPlan = (body?.priorities as string[]) ?? [];
+      state.planSaves++;
+      return fulfill(route, { weekStart: body?.weekStart, priorities: state.weeklyPlan });
+    }
     return fulfill(route, "Unexpected API request", 404);
   });
 
@@ -214,6 +249,40 @@ test("dashboard retries failed analytics without showing false totals", async ({
   state.failAnalytics = false;
   await page.getByText("Activity could not be loaded.").locator("..").getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("heading", { name: "35m" })).toBeVisible();
+});
+
+test("weekly review navigates completed weeks and saves current priorities", async ({ page }, testInfo) => {
+  const state = await mockApi(page);
+  await page.goto("/review");
+  await expect(page.getByRole("heading", { name: "Weekly review" })).toBeVisible();
+  await expect(page.getByText("Nov 2 - Nov 8, 2026")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Weekly totals" }).getByText("1h 15m")).toBeVisible();
+  await page.getByRole("button", { name: "Previous week" }).click();
+  await expect(page.getByText("Oct 26 - Nov 1, 2026")).toBeVisible();
+  await expect(page.getByLabel("Priority 1")).toHaveCount(0);
+  await page.getByRole("button", { name: "Next week" }).click();
+  await expect(page.getByLabel("Priority 1")).toBeVisible();
+  await page.getByLabel("Priority 1").fill("Prepare SQL interview notes");
+  await page.getByLabel("Priority 2").fill("prepare sql interview notes");
+  await page.getByRole("button", { name: "Save plan" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "different" })).toBeVisible();
+  expect(state.planSaves).toBe(0);
+  await page.getByLabel("Priority 2").fill("Complete two practice tests");
+  await page.getByRole("button", { name: "Save plan" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Plan saved" })).toBeVisible();
+  expect(state.weeklyPlan).toEqual(["Prepare SQL interview notes", "Complete two practice tests"]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("weekly-review.png"), fullPage: true });
+});
+
+test("weekly review recovers from a report error", async ({ page }) => {
+  const state = await mockApi(page);
+  state.failReports = true;
+  await page.goto("/review");
+  await expect(page.getByRole("alert").filter({ hasText: "Weekly review could not be loaded" })).toBeVisible();
+  state.failReports = false;
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(page.getByText("Nov 2 - Nov 8, 2026")).toBeVisible();
 });
 
 test("dashboard treats unavailable workspace data as unavailable", async ({ page }) => {

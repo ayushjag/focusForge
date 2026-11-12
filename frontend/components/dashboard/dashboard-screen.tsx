@@ -138,7 +138,7 @@ export function DashboardScreen() {
           <Card className="border border-black/[0.04] shadow-[0_8px_28px_rgba(24,30,24,0.035)]">
             <CardHeader className="flex flex-row items-start justify-between gap-4 pb-2">
               <div><p className="text-sm font-semibold">Focus activity</p><CardTitle className="mt-2 text-2xl font-semibold tabular-nums">{analyticsReady ? formatDuration(weekMinutes) : "-"}</CardTitle><p className="mt-1 text-xs text-muted">Completed focus time in the last 7 days</p>{analyticsQuery.isError && analyticsReady && <p className="mt-1 text-xs text-[#a84e3d]">Showing last available data. <button className="underline" onClick={() => analyticsQuery.refetch()}>Retry</button></p>}</div>
-              <Badge variant="muted">7 days</Badge>
+              <Button asChild variant="ghost" size="sm" className="shrink-0"><Link href="/review">Weekly review <ArrowUpRight size={15} /></Link></Button>
             </CardHeader>
             <CardContent className="pt-3">
               <div className="h-[280px] w-full" role={analyticsReady ? "img" : undefined} aria-label={analyticsReady ? `Completed focus time over 7 days: ${chartData.map((day) => `${day.day} ${day.minutes} minutes`).join(", ")}` : undefined}>

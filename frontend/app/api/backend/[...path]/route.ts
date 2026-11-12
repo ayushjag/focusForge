@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { ACCESS_TOKEN_COOKIE, backendUrl } from "@/lib/server/backend";
 
-const allowedRoots = new Set(["tasks", "sessions", "blocked-websites", "extension", "analytics", "goals"]);
+const allowedRoots = new Set(["tasks", "sessions", "blocked-websites", "extension", "analytics", "goals", "reports"]);
 
 async function proxyRequest(
   request: Request,

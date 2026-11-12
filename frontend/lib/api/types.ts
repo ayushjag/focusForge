@@ -70,3 +70,41 @@ export type DailyGoalSummary = {
   longestStreak: number;
   history: DailyGoalDay[];
 };
+
+export type WeeklyReviewDay = {
+  date: string;
+  focusMinutes: number;
+  targetMinutes: number | null;
+  goalMet: boolean;
+  completedSessions: number;
+  cancelledSessions: number;
+  expiredSessions: number;
+  completedTasks: number;
+};
+
+export type WeeklyPlan = {
+  weekStart: string;
+  priorities: string[];
+};
+
+export type WeeklyReview = {
+  timezone: string;
+  weekStart: string;
+  weekEnd: string;
+  days: WeeklyReviewDay[];
+  totals: {
+    focusMinutes: number;
+    completedSessions: number;
+    cancelledSessions: number;
+    expiredSessions: number;
+    completedTasks: number;
+    goalsMet: number;
+  };
+  previousWeek: {
+    focusMinutes: number;
+    deltaMinutes: number;
+    changePercent: number | null;
+  };
+  bestDay: { date: string; focusMinutes: number } | null;
+  nextWeekPlan: WeeklyPlan;
+};
