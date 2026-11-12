@@ -11,6 +11,7 @@ import { registerExtensionRoutes } from "./modules/extension/extension.routes.js
 import { registerHealthRoutes } from "./modules/health/health.routes.js";
 import { registerSessionRoutes } from "./modules/sessions/session.routes.js";
 import { registerTaskRoutes } from "./modules/tasks/task.routes.js";
+import { registerWeeklyReviewRoutes } from "./modules/weekly-review/weekly-review.routes.js";
 
 const app = Fastify({
   logger: true,
@@ -24,6 +25,7 @@ await app.register(fastifyJwt, {
 app.register(registerHealthRoutes);
 app.register(registerDatabaseRoutes);
 app.register(registerDailyGoalRoutes);
+app.register(registerWeeklyReviewRoutes);
 app.register(registerAuthRoutes);
 app.register(registerAnalyticsRoutes);
 app.register(registerTaskRoutes);

@@ -63,6 +63,7 @@ export const createTask = async (userId: string, input: CreateTaskBody) => {
       description: input.description?.trim() || null,
       priority: input.priority ?? "MEDIUM",
       status: input.status ?? (scheduledStart ? "SCHEDULED" : "PENDING"),
+      completedAt: input.status === "COMPLETED" ? new Date() : null,
       scheduledStart,
       scheduledEnd,
     },
@@ -106,6 +107,9 @@ export const updateTask = async (
         ? { priority: input.priority as TaskPriority }
         : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.status !== undefined && input.status !== task.status
+        ? { completedAt: input.status === "COMPLETED" ? new Date() : null }
+        : {}),
       ...(input.scheduledStart !== undefined ? { scheduledStart } : {}),
       ...(input.scheduledEnd !== undefined ? { scheduledEnd } : {}),
     },

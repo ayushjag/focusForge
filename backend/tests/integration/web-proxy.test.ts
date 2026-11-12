@@ -128,6 +128,28 @@ test("Next auth cookie and proxy enforce account ownership through Fastify", asy
     const otherGoal = await request<{ today: { targetMinutes: number | null } }>("/api/backend/goals/daily", withCookie(cookies[1]));
     assert.equal(ownGoal.body.data?.today.targetMinutes, 30);
     assert.equal(otherGoal.body.data?.today.targetMinutes, null);
+    const anonymousReview = await request("/api/backend/reports/weekly");
+    assert.equal(anonymousReview.response.status, 401);
+    const ownReview = await request<{ weekStart: string; days: unknown[]; nextWeekPlan: { weekStart: string } }>(
+      "/api/backend/reports/weekly", withCookie(cookies[0]),
+    );
+    assert.equal(ownReview.response.status, 200);
+    assert.equal(ownReview.body.data?.days.length, 7);
+    const planWeek = ownReview.body.data!.nextWeekPlan.weekStart;
+    const savedPlan = await request<{ priorities: string[] }>("/api/backend/reports/weekly/plan", withCookie(cookies[0], {
+      method: "PUT",
+      body: json({ weekStart: planWeek, priorities: ["Practice SQL", "Review notes"] }),
+    }));
+    assert.equal(savedPlan.response.status, 200);
+    assert.deepEqual(savedPlan.body.data?.priorities, ["Practice SQL", "Review notes"]);
+    const ownReviewAfterSave = await request<{ nextWeekPlan: { priorities: string[] } }>(
+      "/api/backend/reports/weekly", withCookie(cookies[0]),
+    );
+    const otherReview = await request<{ nextWeekPlan: { priorities: string[] } }>(
+      "/api/backend/reports/weekly", withCookie(cookies[1]),
+    );
+    assert.deepEqual(ownReviewAfterSave.body.data?.nextWeekPlan.priorities, ["Practice SQL", "Review notes"]);
+    assert.deepEqual(otherReview.body.data?.nextWeekPlan.priorities, []);
     const invalidTimezone = await request("/api/backend/analytics/summary?timezone=Mars%2FPhobos", withCookie(cookies[0]));
     assert.equal(invalidTimezone.response.status, 400);
     assert.equal(invalidTimezone.body.error?.code, "INVALID_TIMEZONE");

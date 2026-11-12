@@ -38,6 +38,7 @@ model User {
   tasks          Task[]
   focusSessions  FocusSession[]
   dailyGoalTargets DailyGoalTarget[]
+  weeklyPlans    WeeklyPlan[]
   blockedWebsites BlockedWebsite[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -53,6 +54,18 @@ model DailyGoalTarget {
   updatedAt     DateTime @updatedAt
 
   @@unique([userId, effectiveDate])
+}
+
+model WeeklyPlan {
+  id         String   @id @default(cuid())
+  userId     String
+  weekStart  String
+  priorities String[] @default([])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, weekStart])
 }
 
 model BlockedWebsite {
@@ -75,6 +88,7 @@ model Task {
   description    String?
   priority       TaskPriority   @default(MEDIUM)
   status         TaskStatus     @default(PENDING)
+  completedAt    DateTime?
   scheduledStart DateTime?
   scheduledEnd   DateTime?
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -83,6 +97,7 @@ model Task {
   updatedAt      DateTime       @updatedAt
 
   @@index([userId, status])
+  @@index([userId, completedAt])
   @@index([userId, scheduledStart])
 }
 
